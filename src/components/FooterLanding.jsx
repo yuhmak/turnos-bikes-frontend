@@ -14,7 +14,7 @@ const FooterLanding = ()=>{
           <p className="text-sm mt-1">Tel: +54 9 381 301-9203</p>
           <p className="text-sm text-primary-600 mt-3">Suc. Solano Vera 75</p>
           <p className="text-sm mt-1">Tel: +54 9 381 350-0955</p>
-          <p className="text-sm text-primary-600 mt-3">Suc. Av. Perón 175</p>
+          <p className="text-sm text-primary-600 mt-3">Suc. Av. Perón 139</p>
           <p className="text-sm mt-1">Tel: +54 9 381 473-9136</p>
         </div>
         <div>

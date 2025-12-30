@@ -4,8 +4,10 @@ import { clientAxios } from "../utils/clientAxios";
 import toast from "react-hot-toast";
 import dayjs from "dayjs";
 import { es } from "dayjs/locale/es";
+import utc from "dayjs/plugin/utc";
 
 dayjs.locale("es");
+dayjs.extend(utc);
 
 
 const BookingForm = () => {
@@ -157,6 +159,7 @@ const BookingForm = () => {
       "Suspensión": { U_problemTyp: 41, U_ProSubType: 94 },
       "Instalación de accesorios": { U_problemTyp: 39, U_ProSubType: 132 },
       "Personalizado": { U_problemTyp: 41, U_ProSubType: 95 },
+      "Posventa": { U_problemTyp: 39, U_ProSubType: 131 }
     };
     return map[stringType] || { U_problemTyp: stringType, U_ProSubType: "" };
   };
@@ -402,7 +405,7 @@ const BookingForm = () => {
             {Array.isArray(dateData) && dateData.length > 0
               ? dateData.map((item) => (
                   <option key={item.U_Fecha} value={item.U_Fecha}>
-                    {dayjs( item.U_Fecha).format('dddd, DD/MM/YYYY')}
+                    {dayjs.utc(item.U_Fecha).format('dddd, DD/MM/YYYY')}
                   </option>
                 ))
               : <option value="">No hay fechas disponibles</option>}
@@ -483,7 +486,7 @@ const BookingForm = () => {
             <p className="text-gray-700">
               Has reservado el{" "}
               <strong>
-                {dayjs(confirm.U_Fecha).format('dddd, DD/MM/YYYY')}
+                {dayjs.utc(confirm.U_Fecha).format('dddd, DD/MM/YYYY')}
               </strong>{" "}
               a las <strong>{confirm.U_StartTime }</strong>.
             </p>
@@ -512,6 +515,7 @@ const services = [
   "Suspensión",
   "Instalación de accesorios",
   "Personalizado",
+  "Posventa"
 ];
 
 export default BookingForm;

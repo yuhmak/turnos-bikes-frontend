@@ -6,7 +6,8 @@ const services = [
   {id:3, title:'Frenos y cambio', desc:'Ajuste y reemplazo de pastillas/cables'},
   {id:4, title:'Suspensión', desc:'Mantenimiento y servicio de amortiguadores'},
   {id:5, title:'Instalación de accesorios', desc:'Accesorios, luces, portapaquetes'},
-  {id:6, title:'Personalizado', desc:'Modificaciones a medida para tu bici'}
+  {id:6, title:'Personalizado', desc:'Modificaciones a medida para tu bici'},
+  
 ]
 
 const icons = {

@@ -30,7 +30,8 @@ const Metrics = () => {
   const handleYear = (event) => setYear(event.target.value);
 
   function formatDate(isoDate) {
-    const [y, m, d] = isoDate.split("-");
+    const dateOnly = isoDate.split("T")[0];
+    const [y, m, d] = dateOnly.split("-");
     return `${d}/${m}/${y}`;
   }
 

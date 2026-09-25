@@ -47,8 +47,10 @@ function Login() {
     clearSessionData();
   };
 
+  // Solo al montar: limpia las cookies si no hay usuario.
   useEffect(() => {
     if (!!cookies.user === false) baseCookies();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const loggedIn = async () => {
@@ -138,7 +140,7 @@ function Login() {
     if (cookies.isLoggedIn && cookies.officeSelected) {
       navigate("/turnos");
     }
-  }, [cookies.isLoggedIn, cookies.officeSelected]);
+  }, [cookies.isLoggedIn, cookies.officeSelected, navigate]);
 
   return (
     <div className="min-h-screen flex flex-col md:flex-row">

@@ -3,7 +3,7 @@ import { useForm } from "react-hook-form";
 import { clientAxios } from "../utils/clientAxios";
 import toast from "react-hot-toast";
 import dayjs from "dayjs";
-import { es } from "dayjs/locale/es";
+import "dayjs/locale/es";
 import utc from "dayjs/plugin/utc";
 
 dayjs.locale("es");

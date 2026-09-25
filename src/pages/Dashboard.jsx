@@ -62,6 +62,8 @@ const Dashboard = () => {
     }
   }
   
+  // Solo al montar: renueva la sesion de SAP una vez.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => { setTimeout(() => relogin(), 100000); }, []);
 
   return (

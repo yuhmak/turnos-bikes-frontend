@@ -25,7 +25,6 @@ function SearchShift() {
   const [month, setMonth] = useState(null);
   const [year, setYear] = useState("");
   const setStoreTurnos = useStore((s) => s.getTurnos);
-  const storeShifts = useStore((s) => s.shifts);
   const [cookies, setCookie] = useCookies([]);
 
   const handleMonth = (event) => {

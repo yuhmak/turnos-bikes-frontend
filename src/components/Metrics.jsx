@@ -4,12 +4,12 @@ import { useCookies } from "react-cookie";
 import { clientAxios } from "../utils/clientAxios";
 import { useStore } from "../store/useStore";
 import { getDatesOfMonth } from "../controllers/datesManagement";
+import { aDDMMAAAA, hoyISO } from "../utils/dates";
 
 const Metrics = () => {
   const [month, setMonth] = useState(null);
   const [year, setYear] = useState("");
   const [searchTerm, setSearchTerm] = useState("");
-  const [filterToday, setFilterToday] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const [uniqueDates, setUniqueDates] = useState([]);
 
@@ -29,11 +29,7 @@ const Metrics = () => {
 
   const handleYear = (event) => setYear(event.target.value);
 
-  function formatDate(isoDate) {
-    const dateOnly = isoDate.split("T")[0];
-    const [y, m, d] = dateOnly.split("-");
-    return `${d}/${m}/${y}`;
-  }
+  const formatDate = aDDMMAAAA;
 
   // Mapear códigos numéricos de U_problemTyp/U_ProSubType a etiquetas legibles
   const getProblemLabel = (typ, subtype) => {
@@ -152,11 +148,7 @@ const Metrics = () => {
       const dates = [...new Set(existShifts.map((s) => s.U_Fecha))].sort();
       setUniqueDates(dates);
       // Buscar si existe el día de hoy en las fechas
-      const today = new Date();
-      // yyyy-mm-dd en hora local (toISOString es UTC y despues de las 21hs da el dia siguiente)
-      const todayISO = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}-${String(
-        today.getDate()
-      ).padStart(2, "0")}`;
+      const todayISO = hoyISO();
       const todayIndex = dates.findIndex((d) => d === todayISO);
       if (todayIndex !== -1) {
         setCurrentPage(todayIndex + 1); // Páginas son 1-indexadas
@@ -169,22 +161,12 @@ const Metrics = () => {
     }
   }, [existShifts]);
 
-  // Filtro por búsqueda + hoy
+  // Filtro por búsqueda
   const filteredShifts = (existShifts || []).filter((shift) => {
     const text = searchTerm.toLowerCase().replace(/\s/g, "");
-    const isMatch = Object.values(shift).some((v) =>
+    return Object.values(shift).some((v) =>
       v && v.toString().toLowerCase().replace(/\s/g, "").includes(text)
     );
-
-    if (filterToday) {
-      const today = new Date();
-      const todayFormatted = `${String(today.getDate()).padStart(2, "0")}/${String(
-        today.getMonth() + 1
-      ).padStart(2, "0")}/${today.getFullYear()}`;
-      return isMatch && formatDate(shift.U_Fecha) === todayFormatted;
-    }
-
-    return isMatch;
   });
 
   // Paginación por fecha

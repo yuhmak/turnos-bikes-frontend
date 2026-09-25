@@ -1,68 +1,102 @@
-import React, {useEffect, useRef} from 'react'
+import { ArrowRight } from "lucide-react";
 
-const services = [
-  {id:1, title:'Service Completo', desc:'Inspección, limpieza y ajuste general'},
-  {id:2, title:'Alineación de ruedas', desc:'Trueque y ajuste para ruedas perfectas'},
-  {id:3, title:'Frenos y cambio', desc:'Ajuste y reemplazo de pastillas/cables'},
-  {id:4, title:'Suspensión', desc:'Mantenimiento y servicio de amortiguadores'},
-  {id:5, title:'Instalación de accesorios', desc:'Accesorios, luces, portapaquetes'},
-  {id:6, title:'Personalizado', desc:'Modificaciones a medida para tu bici'},
-  
-]
+// Mismos nombres que las opciones del formulario de turno.
+const servicios = [
+  { titulo: "Service Completo", desc: "Inspección, limpieza y ajuste general. El más pedido." },
+  { titulo: "Alineación de ruedas", desc: "Centrado y ajuste de rayos." },
+  { titulo: "Frenos y cambio", desc: "Pastillas, cables y regulación." },
+  { titulo: "Suspensión", desc: "Service de amortiguadores." },
+  { titulo: "Instalación de accesorios", corto: "Accesorios", desc: "Luces, portapaquetes, soportes." },
+  { titulo: "Personalizado", desc: "Modificaciones a medida para tu bici." },
+  { titulo: "Posventa", desc: "Garantía de tu bici comprada en Yuhmak.", flag: "Compra Yuhmak" },
+];
 
-const icons = {
-  1: (<svg xmlns="http://www.w3.org/2000/svg" className="w-6 h-6 text-primary-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.75 17L8 21l-2-1 1.75-4M15.75 7L17 3l2 1-1.75 4M12 12l3 3m0 0l4-4m-4 4L9 9" /></svg>),
-  2: (<svg xmlns="http://www.w3.org/2000/svg" className="w-6 h-6 text-primary-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 7h16M4 12h16M4 17h16" /></svg>),
-  3: (<svg xmlns="http://www.w3.org/2000/svg" className="w-6 h-6 text-primary-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v8m4-4H8" /></svg>),
-  4: (<svg xmlns="http://www.w3.org/2000/svg" className="w-6 h-6 text-primary-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 2v6m0 8v6M5 12h14" /></svg>),
-  5: (<svg xmlns="http://www.w3.org/2000/svg" className="w-6 h-6 text-primary-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>),
-  6: (<svg xmlns="http://www.w3.org/2000/svg" className="w-6 h-6 text-primary-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 1.567-3 3.5S10.343 15 12 15s3-1.567 3-3.5S13.657 8 12 8z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19.4 15A7.966 7.966 0 0018 9.9M4.6 9A7.966 7.966 0 006 14.1" /></svg>)
-}
-
-const ServicesLanding = ()=>{
-  const ref = useRef(null)
-
-  useEffect(()=>{
-    const els = ref.current?.querySelectorAll('.service-card')
-    if(!els) return
-    const obs = new IntersectionObserver((entries)=>{
-      entries.forEach(e=>{
-        if(e.isIntersecting) e.target.classList.add('enter')
-      })
-    }, {threshold:0.15})
-    els.forEach(el=> obs.observe(el))
-    return ()=> obs.disconnect()
-  },[])
-
+const Ticker = () => {
+  const nombres = servicios.map((s) => s.corto ?? s.titulo);
   return (
-    <div ref={ref} className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-      {services.map(s=> (
-        <article
-          key={s.id}
-          tabIndex={0}
-          className="service-card card group opacity-0 translate-y-6 transform transition-all duration-300 hover:shadow-lg hover:scale-[1.05] hover:-translate-y-1 bg-white rounded-lg border border-transparent hover:border-primary-100 focus:outline-none focus:ring-2 focus:ring-primary-200"
-        >
-          <div className="p-4 flex items-start gap-4">
-            <div className="flex-shrink-0 mt-1 transform transition-transform duration-200 group-hover:scale-110">
-              {icons[s.id]}
-            </div>
-            <div>
-              <h3 className="text-xl font-semibold text-gray-800 group-hover:text-primary-700 transition-colors duration-150">{s.title}</h3>
-              <p className="text-gray-600 mt-2">{s.desc}</p>
-              <div className="mt-4">
-                <a
-                  href="#booking"
-                  className="inline-block text-primary-600 hover:underline transition-colors duration-150 group-hover:text-primary-700"
-                >
-                  Reservar este servicio →
-                </a>
-              </div>
-            </div>
-          </div>
-        </article>
-      ))}
+    <div className="lb-ticker relative z-[2] -mx-4 -mt-2 -rotate-2 overflow-hidden bg-accent py-3 text-black" aria-hidden="true">
+      <div className="lb-ticker-track">
+        {[...nombres, ...nombres].map((n, i) => (
+          <span key={i} className="whitespace-nowrap px-5 font-display text-[28px] font-black uppercase italic">
+            {n}
+          </span>
+        ))}
+      </div>
     </div>
-  )
-}
+  );
+};
 
-export default ServicesLanding
+const ServicesLanding = () => {
+  const [principal, ...resto] = servicios;
+  return (
+    <>
+      <Ticker />
+      <section id="servicios" className="scroll-mt-16 py-[72px] lg:py-28">
+        <div className="mx-auto max-w-[73.5rem] px-4 md:px-8">
+          <div className="mb-10 flex flex-wrap items-end justify-between gap-4">
+            <h2 className="t-display text-[clamp(3rem,9vw,5.5rem)] leading-[.9]">
+              Elegí tu
+              <br />
+              <span className="text-accent">service</span>
+            </h2>
+            <p className="max-w-sm text-taller-muted">
+              Siete servicios para ruta, MTB y urbana. Si no sabés cuál, elegí Personalizado y contanos.
+            </p>
+          </div>
+
+          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+            <a
+              href="#turno"
+              data-rv
+              className="lb-cut-card group relative flex min-h-[360px] flex-col justify-between overflow-hidden bg-accent p-5 text-black lg:col-span-2 lg:row-span-2"
+            >
+              <img
+                src="/img/taller.webp"
+                alt=""
+                loading="lazy"
+                className="pointer-events-none absolute -bottom-12 -right-12 w-3/5 rotate-[-8deg] opacity-35 mix-blend-multiply"
+              />
+              <span className="relative font-display text-[120px] font-black italic leading-[.8]">01</span>
+              <div className="relative">
+                <h3 className="t-display text-[clamp(40px,6vw,64px)] leading-none">
+                  Service
+                  <br />
+                  Completo
+                </h3>
+                <p className="mt-2 text-sm">{principal.desc}</p>
+                <span className="mt-4 inline-flex items-center gap-2 text-sm font-semibold">
+                  Reservar <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" aria-hidden="true" />
+                </span>
+              </div>
+            </a>
+
+            {resto.map((s, i) => (
+              <a
+                key={s.titulo}
+                href="#turno"
+                data-rv
+                style={{ "--d": `${(i + 1) * 80}ms` }}
+                className={`lb-cut-card group relative flex min-h-[176px] flex-col justify-between bg-taller-surface2 p-5 transition-[background-color,transform] duration-300 hover:-translate-y-1 hover:bg-taller-surface3 ${i >= resto.length - 2 ? "lg:col-span-2" : ""}`}
+              >
+                {s.flag && (
+                  <span className="absolute right-4 top-4 bg-black px-2 py-0.5 text-xs font-semibold uppercase tracking-[.08em] text-accent">
+                    {s.flag}
+                  </span>
+                )}
+                <span className="font-display text-[56px] font-black italic leading-[.8] text-taller-surface3 transition-colors group-hover:text-accent">
+                  {String(i + 2).padStart(2, "0")}
+                </span>
+                <div>
+                  <h3 className="mt-4 font-display text-[28px] font-extrabold uppercase italic leading-none">{s.corto ?? s.titulo}</h3>
+                  <p className="mt-2 text-sm text-taller-muted">{s.desc}</p>
+                </div>
+              </a>
+            ))}
+          </div>
+        </div>
+      </section>
+    </>
+  );
+};
+
+export default ServicesLanding;

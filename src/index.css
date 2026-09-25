@@ -37,58 +37,72 @@
 }
 
 
-.container { max-width: 1200px; margin-left: auto; margin-right: auto }
-.enter { opacity: 1; transform: translateY(0); transition: all 0.6s cubic-bezier(.2,.9,.3,1) }
-.service-card.enter { opacity: 1; transform: translateY(0) }
-.service-card { background: #ffffff; border-radius: 0.75rem; border: 1px solid #f3f4f6; padding: 1rem; box-shadow: 0 1px 2px rgba(16,24,40,0.04); opacity: 0; transform: translateY(1.5rem); transition: all 0.6s cubic-bezier(.2,.9,.3,1) }
-
-.confirmation { z-index: 60 }
-
+/* Modal de confirmacion del turno */
 @keyframes confirm-pop {
   0% { transform: scale(.8); opacity: 0 }
   60% { transform: scale(1.06); opacity: 1 }
   100% { transform: scale(1); }
 }
-
 .animate-confirm { animation: confirm-pop 420ms cubic-bezier(.2,.9,.3,1) both }
+@media (prefers-reduced-motion: reduce) { .animate-confirm { animation: none } }
 
-.translate-y-6 { transform: translateY(1.5rem) }
-.opacity-0 { opacity: 0 }
-.opacity-100 { opacity: 1 }
-.transform { transform: translateZ(0) }
+/* ---------- Landing "B · deportiva" ----------
+   Negro + #ff6a00. Texto sobre naranja siempre negro (blanco da 3:1).
+   Lo que Tailwind no expresa bien (cortes, cinta, reveals) vive aca. */
+@layer components {
+  .lb-cut-hero { clip-path: polygon(0 0, 100% 0, 100% calc(100% - var(--lb-cut, 24px)), 0 100%); }
+  .lb-cut-how { clip-path: polygon(0 var(--lb-cut, 24px), 100% 0, 100% calc(100% - var(--lb-cut, 24px)), 0 100%); }
+  .lb-cut-card { clip-path: polygon(0 0, 100% 0, 100% calc(100% - 20px), calc(100% - 20px) 100%, 0 100%); }
+  .lb-cut-img { clip-path: polygon(0 0, 100% 0, 100% calc(100% - 32px), calc(100% - 32px) 100%, 0 100%); }
+  @media (min-width: 48rem) { .lb-cut-hero, .lb-cut-how { --lb-cut: 40px; } }
 
-/* Carousel styles for hero */
-.carousel-wrapper { position: relative }
-.carousel-wrapper .relative { position: relative }
-.carousel-slide { position: absolute; inset: 0; display:flex; align-items:center; justify-content:center; overflow:hidden; opacity: 0; transform: translateX(12px); transition: opacity 500ms cubic-bezier(.2,.9,.3,1), transform 500ms cubic-bezier(.2,.9,.3,1); }
-.carousel-slide-active { opacity: 1; transform: translateX(0); z-index: 10; pointer-events: auto }
+  /* Boton con barrido blanco al hover */
+  .lb-btn { position: relative; overflow: hidden; display: inline-flex; align-items: center; gap: .5rem; padding: .75rem 1.5rem;
+    font-family: "Barlow Condensed", Barlow, sans-serif; font-style: italic; font-weight: 800; font-size: 1.25rem; text-transform: uppercase; letter-spacing: .02em;
+    clip-path: polygon(12px 0, 100% 0, calc(100% - 12px) 100%, 0 100%); transition: transform .25s cubic-bezier(.165,.84,.44,1); }
+  .lb-btn:active { transform: scale(.97); }
+  .lb-btn > * { position: relative; z-index: 1; }
+  .lb-btn-primary { background: #ff6a00; color: #000; }
+  .lb-btn-primary::after { content: ""; position: absolute; inset: 0; background: #fff; transform: translateX(-105%) skewX(-20deg); transition: transform .4s cubic-bezier(.165,.84,.44,1); }
+  .lb-btn-primary:hover::after { transform: translateX(0) skewX(-20deg); }
+  .lb-btn-primary:disabled { opacity: .5; pointer-events: none; }
+  .lb-btn-ghost { background: #282828; color: #fff; }
+  .lb-btn-ghost:hover { background: #3f3f40; }
+  .lb-btn-sm { font-size: 1rem; padding: .5rem 1.25rem; }
 
-.carousel-wrapper button { outline: none }
+  /* Hero: titular con mascara + push de la foto + lineas de velocidad */
+  .lb-line { display: block; overflow: hidden; }
+  .lb-line > span { display: block; animation: lb-up .9s cubic-bezier(.165,.84,.44,1) both; }
+  .lb-line:nth-child(2) > span { animation-delay: .12s; }
+  .lb-push { animation: lb-push 8s cubic-bezier(.165,.84,.44,1) both; }
+  .lb-speed i { display: block; height: 4px; background: #ff6a00; transform-origin: left; animation: lb-line 1s cubic-bezier(.165,.84,.44,1) both; }
+  .lb-speed i:nth-child(2) { animation-delay: .1s; opacity: .6; }
+  .lb-speed i:nth-child(3) { animation-delay: .2s; opacity: .3; }
 
-/* Content overlay inside slide */
-.carousel-content { position: absolute; inset: 0; display: flex; align-items: center; }
-.carousel-content .max-w-3xl { background: linear-gradient(180deg, rgba(0,0,0,0.40) 0%, rgba(0,0,0,0.18) 100%); padding: 1rem; border-radius: 0.5rem }
+  /* Cinta de servicios */
+  .lb-ticker-track { display: flex; width: max-content; animation: lb-tick 28s linear infinite; }
+  .lb-ticker:hover .lb-ticker-track { animation-play-state: paused; }
+  .lb-ticker-track span::after { content: "/"; margin-left: 2.5rem; opacity: .5; }
 
-/* Slide media as <img> to show complete image */
-.slide-media { width:100%; height:100%; display:flex; align-items:center; justify-content:center }
-.slide-media img { max-width:100%; max-height:100%; object-fit:contain }
+  /* "Como funciona": linea punteada entre pasos (desktop) */
+  @media (min-width: 64rem) {
+    .lb-leg::after { content: ""; position: absolute; top: 24px; left: 56px; right: 8px; height: 2px; background: repeating-linear-gradient(90deg, #505050 0 8px, transparent 8px 16px); }
+    .lb-leg:last-child::after { display: none; }
+  }
 
-/* Responsive tweaks */
-@media(min-width:1024px){
-  .carousel-content { padding-left: 3rem }
-  .carousel-slide { min-height: 420px }
-}
+  /* Reveal "de largada": entra desde la derecha con leve skew. Sin JS (o sin IO) se ve todo. */
+  .lb-js [data-rv] { opacity: 0; transform: translateX(32px) skewX(-6deg); transition: opacity .5s cubic-bezier(.165,.84,.44,1), transform .5s cubic-bezier(.165,.84,.44,1); transition-delay: var(--d, 0ms); }
+  .lb-js [data-rv].is-in { opacity: 1; transform: none; }
 
-/* Mobile copy box below the carousel */
-.mobile-hero-copy { box-shadow: 0 6px 18px rgba(16,24,40,0.06); }
+  @keyframes lb-up { from { transform: translateY(105%); } to { transform: none; } }
+  @keyframes lb-push { from { transform: scale(1.12); } to { transform: scale(1); } }
+  @keyframes lb-line { from { transform: scaleX(0); } to { transform: scaleX(1); } }
+  @keyframes lb-tick { to { transform: translateX(-50%); } }
 
-/* Indicator focus styles */
-.carousel-wrapper button:focus { outline: 2px solid rgba(248,113,30,0.2); outline-offset: 2px }
-
-/* Improve touch targets on mobile */
-.carousel-wrapper button { touch-action: manipulation }
-
-/* Slightly larger slides on wide screens */
-@media(min-width:1280px){
-  .carousel-slide { min-height: 520px }
+  @media (prefers-reduced-motion: reduce) {
+    .lb-line > span, .lb-push, .lb-speed i { animation: none; }
+    .lb-ticker-track { animation: none; }
+    .lb-js [data-rv] { opacity: 1; transform: none; transition: none; }
+    .lb-btn, .lb-btn-primary::after { transition: none; }
+  }
 }

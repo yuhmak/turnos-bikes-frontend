@@ -18,6 +18,7 @@ import {
 import { clientAxios } from "../utils/clientAxios";
 import { aDDMMAAAA, aDiaCorto, hoyISO, rangoDelMes } from "../utils/dates";
 import { aCSV, descargarCSV } from "../utils/csv";
+import { getProblemLabel } from "../utils/servicios";
 
 const months = [
   "Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio",
@@ -31,24 +32,6 @@ const ESTADOS = {
   Anulado: { icono: Ban, texto: "text-estado-anu", fondo: "bg-estado-anu/15", borde: "bg-estado-anu" },
 };
 
-// U_problemTyp/U_ProSubType -> etiqueta legible
-const getProblemLabel = (typ, subtype) => {
-  if (!typ && !subtype) return "(sin motivo)";
-  if (typeof typ === "string" && isNaN(Number(typ))) return typ;
-
-  const mapByPair = {
-    "39|131": "Service Completo",
-    "39|99": "Alineación de ruedas",
-    "39|104": "Frenos y cambio",
-    "41|94": "Suspensión",
-    "39|132": "Instalación de accesorios",
-    "41|95": "Personalizado",
-  };
-  const pair = mapByPair[`${Number(typ)}|${Number(subtype)}`];
-  if (pair) return pair;
-  return { 39: "Mantenimiento / Servicio", 41: "Soporte técnico" }[Number(typ)] || String(typ);
-};
-
 const estadoDe = (s) => s.U_State || "Pendiente";
 
 const columnasCSV = [
@@ -58,6 +41,7 @@ const columnasCSV = [
   { titulo: "Teléfono", valor: (s) => s.U_Telephone },
   { titulo: "DNI", valor: (s) => s.U_dni },
   { titulo: "Motivo", valor: (s) => getProblemLabel(s.U_problemTyp, s.U_ProSubType) },
+  { titulo: "Descripción", valor: (s) => s.U_descrption },
   { titulo: "Estado", valor: estadoDe },
 ];
 
@@ -510,6 +494,11 @@ const Metrics = () => {
                       <Wrench className="h-4 w-4 text-accent" aria-hidden="true" />
                       {getProblemLabel(shift.U_problemTyp, shift.U_ProSubType)}
                     </p>
+                    {shift.U_descrption && (
+                      <p className="mt-0.5 line-clamp-2 text-sm italic text-taller-faint" title={shift.U_descrption}>
+                        “{shift.U_descrption}”
+                      </p>
+                    )}
                   </div>
                   <div className="col-start-2 flex flex-wrap gap-x-4 text-sm text-taller-muted lg:col-start-auto lg:flex-col lg:gap-0">
                     {shift.U_Telephone && (

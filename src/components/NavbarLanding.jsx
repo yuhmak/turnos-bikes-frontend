@@ -1,35 +1,42 @@
-import React, {useEffect, useState} from 'react'
+import { useEffect, useState } from "react";
 
-const NavbarLanding = ()=>{
-  const [scrolled, setScrolled] = useState(false)
+const NavbarLanding = () => {
+  const [scrolled, setScrolled] = useState(false);
 
-  useEffect(()=>{
-    const onScroll = ()=> setScrolled(window.scrollY > 40)
-    window.addEventListener('scroll', onScroll)
-    return ()=> window.removeEventListener('scroll', onScroll)
-  },[])
+  useEffect(() => {
+    const onScroll = () => setScrolled(window.scrollY > 40);
+    onScroll();
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
 
   return (
-    <header className={`fixed w-full z-40 transition-all ${scrolled? 'backdrop-blur bg-white/70 shadow-md': 'bg-transparent'}`}>
-      <div className="container mx-auto px-6 py-4 flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <img src="/logo.png" alt="logo2" className="h-24 rounded-md shadow-sm" />
-          
-        </div>
-        <nav className="hidden md:flex items-center gap-6 text-gray-700">
-          <a href="#services" className="hover:text-primary-600 transition">Servicios</a>
-          <a href="#requirements" className="hover:text-primary-600 transition">Requisitos</a>
-          <a href="#booking" className="hover:text-primary-600 transition">Reservar</a>
-          <a href="/login" className="bg-primary-600 text-white px-4 py-2 rounded-md hover:bg-primary-700 transition-colors">
-            Iniciar Sesión
-          </a>
+    <header
+      className={`fixed inset-x-0 top-0 z-40 transition-colors duration-300 ${
+        scrolled ? "bg-black/90 backdrop-blur" : "bg-gradient-to-b from-black to-transparent"
+      }`}
+    >
+      <div className="mx-auto flex h-16 max-w-[73.5rem] items-center justify-between px-4 md:px-8">
+        <a href="#" aria-label="Yuhmak Bikes, inicio">
+          <img src="/logo-dark.png" alt="Yuhmak Bikes" className="h-6 w-auto md:h-7" />
+        </a>
+        <nav aria-label="Secciones" className="hidden gap-6 font-display text-base font-semibold uppercase tracking-[.08em] md:flex">
+          <a href="#servicios" className="text-taller-muted transition-colors hover:text-accent">Servicios</a>
+          <a href="#como" className="text-taller-muted transition-colors hover:text-accent">Cómo funciona</a>
+          <a href="#sucursales" className="text-taller-muted transition-colors hover:text-accent">Sucursales</a>
+          <a href="#mis-turnos" className="text-taller-muted transition-colors hover:text-accent">Mis turnos</a>
         </nav>
-        <div className="md:hidden">
-          <a href="#booking" className="bg-primary-600 text-white px-3 py-2 rounded-md">Reservar</a>
+        <div className="flex items-center gap-4">
+          <a href="/login" className="hidden text-sm text-taller-muted hover:text-white md:inline">
+            Iniciar sesión
+          </a>
+          <a href="#turno" className="lb-btn lb-btn-primary lb-btn-sm">
+            <span>Sacar turno</span>
+          </a>
         </div>
       </div>
     </header>
-  )
-}
+  );
+};
 
-export default NavbarLanding
+export default NavbarLanding;

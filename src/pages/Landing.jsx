@@ -1,47 +1,78 @@
-import NavbarLanding from '../components/NavbarLanding'
-import HeroLanding from '../components/HeroLanding'
-import ServicesLanding from '../components/ServicesLanding'
-import RequirementsLanding from '../components/RequirementsLanding'
-import BookingForm from '../components/BookingForm'
-import FooterLanding from '../components/FooterLanding'
+import { useEffect } from "react";
+import NavbarLanding from "../components/NavbarLanding";
+import HeroLanding from "../components/HeroLanding";
+import ServicesLanding from "../components/ServicesLanding";
+import RequirementsLanding from "../components/RequirementsLanding";
+import BookingForm from "../components/BookingForm";
+import FooterLanding from "../components/FooterLanding";
+import MisTurnos from "../components/MisTurnos";
+
+// Reveal al entrar en pantalla. Sin IntersectionObserver (o con reduced-motion, ver CSS) se ve todo.
+const useReveal = () => {
+  useEffect(() => {
+    if (!("IntersectionObserver" in window)) return;
+    const root = document.documentElement;
+    root.classList.add("lb-js");
+    const io = new IntersectionObserver(
+      (entradas) =>
+        entradas.forEach((e) => {
+          if (!e.isIntersecting) return;
+          const el = e.target;
+          el.classList.add("is-in");
+          io.unobserve(el);
+          // Terminada la entrada se sueltan las clases: si no, el transform del reveal pisa los hover.
+          setTimeout(() => {
+            el.removeAttribute("data-rv");
+            el.classList.remove("is-in");
+          }, 1400);
+        }),
+      { threshold: 0.15 }
+    );
+    document.querySelectorAll("[data-rv]").forEach((el) => io.observe(el));
+    return () => {
+      io.disconnect();
+      root.classList.remove("lb-js");
+    };
+  }, []);
+};
 
 const Landing = () => {
+  useReveal();
+
   return (
-    <div className="font-sans text-gray-800">
+    <div className="min-h-screen overflow-x-clip bg-black font-barlow text-white antialiased">
       <NavbarLanding />
-      <main className="overflow-x-hidden">
+      <main>
         <HeroLanding />
-        <section id="services" className="py-20">
-          <div className="container mx-auto px-6">
-            <h2 className="text-3xl md:text-4xl font-bold text-gray-800 mb-6">Nuestros servicios</h2>
-            <ServicesLanding />
-          </div>
-        </section>
+        <ServicesLanding />
+        <RequirementsLanding />
 
-        <section id="requirements" className="py-16 bg-gray-50">
-          <div className="container mx-auto px-6">
-            <h2 className="text-3xl md:text-4xl font-bold text-gray-800 mb-6">Requisitos</h2>
-            <RequirementsLanding />
-          </div>
-        </section>
-
-        <section id="booking" className="py-16">
-          <div className="container mx-auto px-6">
-            <h2 className="text-3xl md:text-4xl font-bold text-gray-800 mb-6">Reserva tu service</h2>
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-              <div>
-                <BookingForm />
-              </div>
-              <div className="hidden lg:flex items-center justify-center card relative">
-                <img src="/service2.jpg" alt="service" className="rounded-lg shadow-lg transform hover:scale-105 transition-transform" />
-              </div>
+        <section id="turno" className="scroll-mt-16 py-[72px] lg:py-28">
+          <div className="mx-auto grid max-w-[73.5rem] gap-10 px-4 md:px-8 lg:grid-cols-[.9fr_1.4fr] lg:items-start lg:gap-16">
+            <div className="lg:sticky lg:top-24">
+              <h2 className="t-display text-[clamp(3rem,9vw,5.5rem)] leading-[.9]">
+                Tu turno
+                <br />
+                <span className="text-accent">en 1 minuto</span>
+              </h2>
+              <p className="mt-4 max-w-sm text-taller-muted">
+                Elegí sucursal, servicio, día y horario. Te confirmamos por email.
+              </p>
+              <img
+                src="/img/servicio-completo.webp"
+                alt="Técnico ajustando el eje pedalero de una bicicleta"
+                loading="lazy"
+                className="lb-cut-img mt-8 hidden aspect-[4/3] w-full object-cover lg:block"
+              />
             </div>
+            <BookingForm />
           </div>
         </section>
+        <MisTurnos />
       </main>
       <FooterLanding />
     </div>
-  )
-}
+  );
+};
 
-export default Landing
+export default Landing;

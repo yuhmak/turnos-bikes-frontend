@@ -1,101 +1,46 @@
-import React, { useEffect, useState, useRef } from "react";
+import { ArrowRight } from "lucide-react";
 
-const images = ["/hero.png"];
+const HeroLanding = () => (
+  <section className="lb-cut-hero relative flex min-h-[min(100svh,880px)] items-end overflow-hidden pt-24">
+    <div className="lb-push absolute inset-0 -z-0">
+      {/* El ciclista esta a la derecha: en mobile se encuadra hacia ese lado para no cortarlo. */}
+      <img
+        src="/img/hero-bike.webp"
+        alt="Ciclista de montaña saltando en un sendero de cerro al atardecer"
+        fetchpriority="high"
+        className="h-full w-full object-cover object-[72%_50%] md:object-center"
+      />
+      <div className="absolute inset-0 bg-gradient-to-t from-black via-black/60 to-black/10 md:bg-gradient-to-r md:from-black/90 md:via-black/50 md:to-transparent" />
+      <div className="absolute inset-x-0 bottom-0 h-1/3 bg-gradient-to-t from-black to-transparent" />
+    </div>
 
-const HeroLanding = () => {
-  const [index, setIndex] = useState(0);
-  const timerRef = useRef(null);
-
-  useEffect(() => {
-    timerRef.current = setInterval(
-      () => setIndex((i) => (i + 1) % images.length),
-      5000
-    );
-    return () => clearInterval(timerRef.current);
-  }, []);
-
-  return (
-    <section className="relative pt-28">
-      <div className="container mx-auto px-6">
-        <div className="carousel-wrapper w-full rounded-2xl overflow-hidden shadow-xl">
-          <div className="relative w-full h-64 sm:h-80 md:h-96 lg:h-[520px]">
-            {images.map((src, i) => (
-              <div
-                key={src}
-                className={`carousel-slide ${
-                  i === index ? "carousel-slide-active" : ""
-                }`}
-                role="img"
-                aria-label={`slide-${i}`}
-              >
-                {/* Imagen adaptativa dentro del slide: object-contain para mostrar completa */}
-                <div className="slide-media w-full h-full flex items-center justify-center bg-gradient-to-b from-[#ea580c] to-[#fdba74]">
-                  <img
-                    src={src}
-                    alt={`slide-${i}`}
-                    className="max-w-full max-h-full object-contain"
-                  />
-                </div>
-
-                {/* Copy overlay dentro del slide (solo en desktop) */}
-                <div className="carousel-content absolute mt-24 inset-0 invisible lg:visible flex px-6 py-8 lg:py-12  pointer-events-none lg:pointer-events-auto">
-                  <div className="max-w-3xl mx-auto lg:mx-0 lg:max-w-lg">
-                    <h1 className="text-3xl md:text-4xl lg:text-5xl font-extrabold text-white leading-tight">
-                      Service profesional para tu bicicleta
-                    </h1>
-                    <p className="text-white/90 mt-3 mb-5">
-                      Mantenimiento, ajustes y personalizaciones realizados por
-                      técnicos expertos. Reserva hoy y vuelve a rodar con
-                      confianza.
-                    </p>
-                    <div className="flex gap-4 items-center">
-                      <a
-                        href="#booking"
-                        className="inline-block bg-white  text-gray-900 font-semibold px-6 py-3 rounded-lg shadow hover:bg-[#ea580c] hover:text-white transition-colors duration-300 focus:bg-[#ea580c] focus:text-white"
-                      >
-                        Reservar ahora
-                      </a>
-                      <a
-                        href="#services"
-                        className="inline-block bg-[#ea580c] border border-white/30 text-gray-200 font-semibold px-5 py-3 rounded-lg hover:bg-white hover:border-white hover:text-gray-900 transition-colors duration-300 focus:bg-white focus:border-white focus:text-gray-900"
-                      >
-                        Ver servicios
-                      </a>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-
-          {/* Mobile copy: mostrar contenido debajo del carousel en pantallas pequeñas */}
-          <div className="mobile-hero-copy block lg:hidden bg-white p-6 rounded-b-2xl shadow-md mt-4">
-            <h2 className="text-2xl font-bold text-gray-900">
-              Service profesional para tu bicicleta
-            </h2>
-            <p className="text-gray-600 mt-2">
-              Mantenimiento, ajustes y personalizaciones realizados por técnicos
-              expertos. Reserva hoy y volvé a rodar con confianza.
-            </p>
-            <div className="mt-2 flex gap-3 items-center pt-2">
-              <a
-                href="#booking"
-                className="bg-primary-600 text-white px-4 py-2 rounded text-center"
-              >
-                Reservar ahora
-              </a>
-              <a
-                href="#services"
-                className="bg-gray-200 px-4 py-2 rounded text-center"
-              >
-                Ver servicios
-              </a>
-            </div>
-          </div>
-        </div>
+    <div className="relative mx-auto w-full max-w-[73.5rem] px-4 pb-[calc(var(--lb-cut,24px)+40px)] md:px-8">
+      <span className="t-cut inline-flex items-center bg-accent px-3 py-1 font-display text-sm font-extrabold uppercase italic tracking-[.08em] text-black">
+        Service de bicis · Tucumán
+      </span>
+      <h1 className="t-display my-4 text-[clamp(3.5rem,13vw,9rem)] leading-[.9] md:mb-5">
+        <span className="lb-line"><span>Sacá turno.</span></span>
+        <span className="lb-line"><span className="text-accent">Volvé a rodar.</span></span>
+      </h1>
+      <p className="max-w-md text-lg text-taller-muted">
+        Frenos, cambios, suspensión y service completo por técnicos Yuhmak. Reservás en un minuto.
+      </p>
+      <div className="mt-7 flex flex-wrap gap-3">
+        <a href="#turno" className="lb-btn lb-btn-primary">
+          <span>Sacar turno</span>
+          <ArrowRight className="h-5 w-5" strokeWidth={3} aria-hidden="true" />
+        </a>
+        <a href="#mis-turnos" className="lb-btn lb-btn-ghost">
+          <span>Ya tengo turno</span>
+        </a>
       </div>
-    </section>
-  );
-};
+      <div className="lb-speed mt-10 flex gap-1" aria-hidden="true">
+        <i className="w-24" />
+        <i className="w-12" />
+        <i className="w-6" />
+      </div>
+    </div>
+  </section>
+);
 
 export default HeroLanding;

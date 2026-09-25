@@ -1,12 +1,11 @@
 export const getDatesOfMonth = (year, month, sucursal) => {
+    // Strings 'YYYY-MM-DD' armados a mano: toISOString() formatea en UTC y puede correr el dia.
     var dates = [];
-    var primerDia = new Date(year, month - 1, 1);
     var ultimoDia = new Date(year, month, 0);
     for (var i = 1; i <= ultimoDia.getDate(); i++) {
-        dates.push(new Date(year, month - 1, i));
+        dates.push(`${year}-${String(month).padStart(2, "0")}-${String(i).padStart(2, "0")}`);
     }
-    return dates.map(day => {
-        const date = day.toISOString().slice(0,10)
+    return dates.map(date => {
         return {
             U_Fecha: date,
             U_CantServMax: 0,

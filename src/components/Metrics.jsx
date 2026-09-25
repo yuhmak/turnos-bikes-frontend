@@ -153,7 +153,10 @@ const Metrics = () => {
       setUniqueDates(dates);
       // Buscar si existe el día de hoy en las fechas
       const today = new Date();
-      const todayISO = today.toISOString().slice(0, 10); // yyyy-mm-dd
+      // yyyy-mm-dd en hora local (toISOString es UTC y despues de las 21hs da el dia siguiente)
+      const todayISO = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}-${String(
+        today.getDate()
+      ).padStart(2, "0")}`;
       const todayIndex = dates.findIndex((d) => d === todayISO);
       if (todayIndex !== -1) {
         setCurrentPage(todayIndex + 1); // Páginas son 1-indexadas

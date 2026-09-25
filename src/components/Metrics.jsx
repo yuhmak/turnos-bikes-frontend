@@ -1,354 +1,374 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import toast from "react-hot-toast";
 import { useCookies } from "react-cookie";
+import { ChevronLeft, ChevronRight, Download, RefreshCw, Search } from "lucide-react";
 import { clientAxios } from "../utils/clientAxios";
-import { useStore } from "../store/useStore";
-import { getDatesOfMonth } from "../controllers/datesManagement";
-import { aDDMMAAAA, hoyISO } from "../utils/dates";
+import { aDDMMAAAA, aDiaCorto, hoyISO, rangoDelMes } from "../utils/dates";
+import { aCSV, descargarCSV } from "../utils/csv";
+
+const months = [
+  "Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio",
+  "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre",
+];
+
+const ESTADOS = {
+  Pendiente: "bg-yellow-500",
+  Atendido: "bg-green-600",
+  Anulado: "bg-red-600",
+};
+
+// U_problemTyp/U_ProSubType -> etiqueta legible
+const getProblemLabel = (typ, subtype) => {
+  if (!typ && !subtype) return "(sin motivo)";
+  if (typeof typ === "string" && isNaN(Number(typ))) return typ;
+
+  const mapByPair = {
+    "39|131": "Service Completo",
+    "39|99": "Alineación de ruedas",
+    "39|104": "Frenos y cambio",
+    "41|94": "Suspensión",
+    "39|132": "Instalación de accesorios",
+    "41|95": "Personalizado",
+  };
+  const pair = mapByPair[`${Number(typ)}|${Number(subtype)}`];
+  if (pair) return pair;
+  return { 39: "Mantenimiento / Servicio", 41: "Soporte técnico" }[Number(typ)] || String(typ);
+};
+
+const estadoDe = (s) => s.U_State || "Pendiente";
+
+const columnasCSV = [
+  { titulo: "Fecha", valor: (s) => aDDMMAAAA(s.U_Fecha) },
+  { titulo: "Hora", valor: (s) => s.U_StartTime },
+  { titulo: "Nombre", valor: (s) => s.U_custmrName },
+  { titulo: "Teléfono", valor: (s) => s.U_Telephone },
+  { titulo: "DNI", valor: (s) => s.U_dni },
+  { titulo: "Motivo", valor: (s) => getProblemLabel(s.U_problemTyp, s.U_ProSubType) },
+  { titulo: "Estado", valor: estadoDe },
+];
+
+const TODOS = "todos";
 
 const Metrics = () => {
-  const [month, setMonth] = useState(null);
-  const [year, setYear] = useState("");
-  const [searchTerm, setSearchTerm] = useState("");
-  const [currentPage, setCurrentPage] = useState(1);
-  const [uniqueDates, setUniqueDates] = useState([]);
+  const [cookies] = useCookies();
+  const bplId = cookies.officeSelected?.BPLId;
 
-  const [cookies, setCookie] = useCookies();
+  // Filtros en la URL: sobreviven al refresh y se pueden compartir.
+  const [params, setParams] = useSearchParams();
+  const hoy = new Date();
+  const mes = Number(params.get("mes")) || hoy.getMonth() + 1;
+  const anio = Number(params.get("anio")) || hoy.getFullYear();
+  const diaParam = params.get("dia");
+  const q = params.get("q") || "";
 
-  // Zustand store
-  const existShifts = useStore((s) => s.existShifts);
-  const shifts = useStore((s) => s.shifts);
-  const monthSelected = useStore((s) => s.monthSelected);
-  const yearSelected = useStore((s) => s.yearSelected);
-  const setStoreTurnos = useStore((s) => s.getTurnos);
-
-  const handleMonth = (event) => {
-    const filtered = months.filter((mon) => mon.value === Number(event.target.value));
-    setMonth(filtered[0] || null);
-  };
-
-  const handleYear = (event) => setYear(event.target.value);
-
-  const formatDate = aDDMMAAAA;
-
-  // Mapear códigos numéricos de U_problemTyp/U_ProSubType a etiquetas legibles
-  const getProblemLabel = (typ, subtype) => {
-    // si ya viene como texto, devolver tal cual
-    if (!typ && !subtype) return "(sin motivo)";
-    if (typeof typ === "string" && isNaN(Number(typ))) return typ;
-
-    const t = Number(typ);
-    const s = subtype !== undefined && subtype !== null ? Number(subtype) : null;
-
-    const mapByPair = {
-      "39|131": "Service Completo",
-      "39|99": "Alineación de ruedas",
-      "39|104": "Frenos y cambio",
-      "41|94": "Suspensión",
-      "39|132": "Instalación de accesorios",
-      "41|95": "Personalizado",
-    };
-
-    if (s) {
-      const pairKey = `${t}|${s}`;
-      if (mapByPair[pairKey]) return mapByPair[pairKey];
-    }
-
-    // Mapeo por tipo en caso no tengamos subtype
-    const mapByType = {
-      39: "Mantenimiento / Servicio",
-      41: "Soporte técnico",
-    };
-
-    return mapByType[t] || String(typ);
-  };
-
-  const searchShifts = async () => {
-    if (!month) return toast.error("Ingresar el mes.");
-    if (!year) return toast.error("Ingresar el año.");
-    if (String(year).length !== 4) return toast.error("El año debe contener 4 dígitos.");
-    if (!cookies.officeSelected?.BPLId) return toast.error("No hay una sucursal seleccionada.");
-
-    let toastId = null;
-    try {
-      const dates = getDatesOfMonth(year, month.value, cookies.officeSelected.BPLId);
-      setCookie("loading", true);
-      toastId = toast.loading("Buscando turnos pertenecientes a ese mes y año...", { duration: 0 });
-
-      // Alineado a SearchShift
-      const { data } = await clientAxios.get("/getShiftMonth", {
-        params: {
-          FechInicio: dates[0].U_Fecha,
-          FechFinal: dates[dates.length - 1].U_Fecha,
-          BPLId: cookies.officeSelected.BPLId,
+  const setFiltro = useCallback(
+    (cambios) =>
+      setParams(
+        (prev) => {
+          const next = new URLSearchParams(prev);
+          Object.entries(cambios).forEach(([k, v]) =>
+            v === "" || v == null ? next.delete(k) : next.set(k, v)
+          );
+          return next;
         },
-      });
+        { replace: true }
+      ),
+    [setParams]
+  );
 
-      if (data.shiftsExist.length > 0) {
-        setStoreTurnos({
-          data: data.shifts,
-          month,
-          year,
-          shifts: data.shiftsExist,
-        });
-        toast.success("Turnos cargados exitosamente.");
-      } else {
-        setStoreTurnos({
-          data: dates,
-          month: null,
-          year: null,
-          shifts: [],
-        });
-        toast.error("No se encontraron turnos para el período seleccionado.");
-      }
-    } catch (error) {
-      console.error("Error al buscar turnos:", error);
-      setStoreTurnos({ data: [], month: null, year: null, shifts: [] });
-      toast.error("Error al buscar turnos. Por favor intente nuevamente.");
+  const [turnos, setTurnos] = useState([]);
+  const [cargando, setCargando] = useState(false);
+  const [error, setError] = useState(null);
+
+  const buscar = useCallback(async () => {
+    if (!bplId) return;
+    const { desde, hasta } = rangoDelMes(anio, mes);
+    setCargando(true);
+    setError(null);
+    try {
+      const { data } = await clientAxios.get("/getShiftMonth", {
+        params: { FechInicio: desde, FechFinal: hasta, BPLId: bplId },
+      });
+      setTurnos(data.shiftsExist || []);
+    } catch (e) {
+      console.error("Error al buscar turnos:", e);
+      setTurnos([]);
+      setError("No se pudieron cargar los turnos. Si sigue pasando, volvé a iniciar sesión.");
     } finally {
-      setCookie("loading", false);
-      if (toastId) toast.dismiss(toastId);
+      setCargando(false);
     }
-  };
+  }, [bplId, anio, mes]);
+
+  // Carga el mes al entrar y cada vez que cambia el mes, el año o la sucursal.
+  useEffect(() => {
+    buscar();
+  }, [buscar]);
+
+  // Dias con turnos, con su cantidad.
+  const dias = useMemo(() => {
+    const conteo = {};
+    turnos.forEach((t) => (conteo[t.U_Fecha] = (conteo[t.U_Fecha] || 0) + 1));
+    return Object.keys(conteo).sort().map((fecha) => ({ fecha, cantidad: conteo[fecha] }));
+  }, [turnos]);
+
+  // Dia elegido: el de la URL, si no hoy (si tiene turnos), si no el primero.
+  const hoyStr = hoyISO();
+  const dia =
+    diaParam === TODOS
+      ? TODOS
+      : dias.some((d) => d.fecha === diaParam)
+      ? diaParam
+      : dias.some((d) => d.fecha === hoyStr)
+      ? hoyStr
+      : dias[0]?.fecha ?? TODOS;
+  const indiceDia = dias.findIndex((d) => d.fecha === dia);
+
+  const texto = q.toLowerCase().replace(/\s/g, "");
+  const visibles = turnos
+    .filter((t) => dia === TODOS || t.U_Fecha === dia)
+    .filter(
+      (t) =>
+        !texto ||
+        Object.values(t).some(
+          (v) => v && v.toString().toLowerCase().replace(/\s/g, "").includes(texto)
+        )
+    )
+    .sort((a, b) =>
+      `${a.U_Fecha}${a.U_StartTime}`.localeCompare(`${b.U_Fecha}${b.U_StartTime}`)
+    );
+
+  const contar = (estado) => turnos.filter((t) => estadoDe(t) === estado).length;
 
   const handleStatusChange = async (shift, newState) => {
+    const toastId = toast.loading("Actualizando estado del turno...");
     try {
-      const toastId = toast.loading("Actualizando estado del turno...", { duration: 0 });
-
       await clientAxios.patch(`/patchShiftStatus/${shift.DocEntry}`, {
         U_State: newState,
         U_StartTime: shift.U_StartTime,
         U_Fecha: shift.U_Fecha,
         U_BPLId: shift.U_BPLId,
       });
-
-      const updatedShifts = existShifts.map((s) =>
-        s.DocEntry === shift.DocEntry ? { ...s, U_State: newState } : s
+      setTurnos((prev) =>
+        prev.map((s) => (s.DocEntry === shift.DocEntry ? { ...s, U_State: newState } : s))
       );
-
-      // Mantener datos y mes/año actuales del store, NO cambiar la página actual
-      setStoreTurnos({
-        data: shifts,
-        month: monthSelected,
-        year: yearSelected,
-        shifts: updatedShifts,
-      });
-
-      toast.dismiss(toastId);
-      toast.success("Estado del turno actualizado correctamente.");
-    } catch (error) {
-      console.error("Error al actualizar el estado del turno:", error);
-      toast.error("Error al actualizar el estado del turno.");
+      toast.success("Estado del turno actualizado.", { id: toastId });
+    } catch (e) {
+      console.error("Error al actualizar el estado del turno:", e);
+      toast.error("No se pudo actualizar el estado del turno.", { id: toastId });
     }
   };
 
-  // Agrupar por fecha para paginar y mostrar primero el día de hoy si existe
-  useEffect(() => {
-    if (Array.isArray(existShifts) && existShifts.length > 0) {
-      const dates = [...new Set(existShifts.map((s) => s.U_Fecha))].sort();
-      setUniqueDates(dates);
-      // Buscar si existe el día de hoy en las fechas
-      const todayISO = hoyISO();
-      const todayIndex = dates.findIndex((d) => d === todayISO);
-      if (todayIndex !== -1) {
-        setCurrentPage(todayIndex + 1); // Páginas son 1-indexadas
-      } else {
-        setCurrentPage(1);
-      }
-    } else {
-      setUniqueDates([]);
-      setCurrentPage(1);
-    }
-  }, [existShifts]);
+  const exportar = () => {
+    const sufijo = dia === TODOS ? `${anio}-${String(mes).padStart(2, "0")}` : dia;
+    descargarCSV(`turnos-${cookies.officeSelected?.BPLName ?? bplId}-${sufijo}.csv`, aCSV(visibles, columnasCSV));
+  };
 
-  // Filtro por búsqueda
-  const filteredShifts = (existShifts || []).filter((shift) => {
-    const text = searchTerm.toLowerCase().replace(/\s/g, "");
-    return Object.values(shift).some((v) =>
-      v && v.toString().toLowerCase().replace(/\s/g, "").includes(text)
-    );
-  });
+  const irADia = (i) => dias[i] && setFiltro({ dia: dias[i].fecha });
 
-  // Paginación por fecha
-  const totalPages = uniqueDates.length;
-  const currentDate = uniqueDates[currentPage - 1];
-  const currentShifts = filteredShifts.filter((s) =>
-    currentDate ? s.U_Fecha === currentDate : true
+  const selectorEstado = (shift) => (
+    <select
+      aria-label={`Estado del turno de ${shift.U_custmrName}`}
+      className={`rounded px-2 py-1 text-sm text-white ${ESTADOS[estadoDe(shift)] ?? ESTADOS.Pendiente}`}
+      value={estadoDe(shift)}
+      onChange={(e) => handleStatusChange(shift, e.target.value)}
+    >
+      {Object.keys(ESTADOS).map((estado) => (
+        <option key={estado} value={estado} className="bg-white text-gray-900">
+          {estado}
+        </option>
+      ))}
+    </select>
   );
 
-  const pendientes = existShifts.filter(
-    (s) => s.U_State === "Pendiente" || s.U_State === null
-  ).length;
-  const atendidos = existShifts.filter((s) => s.U_State === "Atendido").length;
-  const anulados = existShifts.filter((s) => s.U_State === "Anulado").length;
+  const anios = [hoy.getFullYear() - 1, hoy.getFullYear(), hoy.getFullYear() + 1];
 
   return (
     <>
-      {/* Buscador por Mes/Año */}
-      <h3 className="pt-3 text-lg font-medium">Ingresar el mes y el año:</h3>
-      <div className="flex gap-3 items-center mt-3">
-        <div>
-          <select className="border rounded px-2 py-1" onChange={handleMonth} defaultValue={0}>
-            {months.map((opt) => (
-              <option value={opt.value} key={opt.value}>
-                {opt.name}
-              </option>
+      {/* Periodo */}
+      <div className="flex flex-wrap items-end gap-3">
+        <label className="text-sm">
+          <span className="mb-1 block text-gray-600">Mes</span>
+          <select
+            className="rounded border px-2 py-1.5"
+            value={mes}
+            onChange={(e) => setFiltro({ mes: e.target.value, dia: "" })}
+          >
+            {months.map((nombre, i) => (
+              <option key={nombre} value={i + 1}>{nombre}</option>
             ))}
           </select>
-        </div>
-        <div>
-          <input
-            className="border rounded px-2 py-1 w-32"
-            type="number"
-            placeholder="Año"
-            onChange={handleYear}
-          />
-        </div>
-        <button className="bg-green-600 text-white px-4 py-2 rounded" onClick={searchShifts}>
-          Buscar
+        </label>
+        <label className="text-sm">
+          <span className="mb-1 block text-gray-600">Año</span>
+          <select
+            className="rounded border px-2 py-1.5"
+            value={anio}
+            onChange={(e) => setFiltro({ anio: e.target.value, dia: "" })}
+          >
+            {anios.map((a) => (
+              <option key={a} value={a}>{a}</option>
+            ))}
+          </select>
+        </label>
+        <button
+          onClick={buscar}
+          disabled={cargando}
+          className="inline-flex items-center gap-2 rounded border px-3 py-1.5 text-sm text-gray-700 hover:bg-gray-50 active:scale-[.98] disabled:opacity-50"
+        >
+          <RefreshCw className={`h-4 w-4 ${cargando ? "animate-spin motion-reduce:animate-none" : ""}`} aria-hidden="true" />
+          Actualizar
         </button>
       </div>
 
-      {/* Métricas */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-3 my-4">
-        <div className="bg-yellow-500 text-white rounded p-4">
-          <div className="text-lg font-semibold">Turnos Pendientes</div>
-          <div className="text-2xl">{pendientes}</div>
-        </div>
-        <div className="bg-green-600 text-white rounded p-4">
-          <div className="text-lg font-semibold">Turnos Atendidos</div>
-          <div className="text-2xl">{atendidos}</div>
-        </div>
-        <div className="bg-red-600 text-white rounded p-4">
-          <div className="text-lg font-semibold">Turnos Anulados</div>
-          <div className="text-2xl">{anulados}</div>
-        </div>
+      {/* Metricas del periodo */}
+      <div className="my-4 grid grid-cols-3 gap-2 sm:gap-3">
+        {[
+          ["Pendientes", contar("Pendiente"), "bg-yellow-500"],
+          ["Atendidos", contar("Atendido"), "bg-green-600"],
+          ["Anulados", contar("Anulado"), "bg-red-600"],
+        ].map(([titulo, valor, color]) => (
+          <div key={titulo} className={`${color} rounded p-3 text-white sm:p-4`}>
+            <div className="text-xs font-semibold sm:text-base">{titulo}</div>
+            <div className="text-2xl font-bold tabular-nums">{valor}</div>
+          </div>
+        ))}
       </div>
 
-      {/* Filtros de búsqueda */}
-      <div className="flex items-center gap-4 my-4">
-        <div className="flex items-center gap-2">
-          <input
-            className="border rounded px-2 py-1"
-            type="text"
-            placeholder="Buscar cliente"
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-          />
-        </div>
-        
-      </div>
+      {error && (
+        <div className="mb-4 rounded border border-red-200 bg-red-50 p-3 text-sm text-red-700">{error}</div>
+      )}
 
-      {/* Tabla de turnos por fecha (paginada) */}
-      {currentShifts && currentShifts.length > 0 ? (
-        <div className="bg-white shadow rounded p-4">
-          {/* Paginación */}
-          {totalPages > 0 && (
-            <div className="flex items-center justify-between mb-4">
-              <button
-                onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
-                disabled={currentPage === 1}
-                className="btn btn-sm bg-gray-200 rounded px-3 py-1 disabled:opacity-50"
-              >
-                ← Anterior
-              </button>
-              <span className="text-sm">
-                {currentDate ? formatDate(currentDate) : "Todos"} - Página {currentPage} de {totalPages}
-              </span>
-              <button
-                onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
-                disabled={currentPage === totalPages}
-                className="btn btn-sm bg-gray-200 rounded px-3 py-1 disabled:opacity-50"
-              >
-                Siguiente →
-              </button>
-            </div>
+      {/* Navegacion por dia + busqueda */}
+      {dias.length > 0 && (
+        <div className="mb-4 flex flex-wrap items-center gap-2">
+          <div className="flex items-center gap-1">
+            <button
+              onClick={() => irADia(indiceDia - 1)}
+              disabled={dia === TODOS || indiceDia <= 0}
+              className="rounded border p-1.5 hover:bg-gray-50 disabled:opacity-40"
+              aria-label="Día anterior"
+            >
+              <ChevronLeft className="h-4 w-4" />
+            </button>
+            <select
+              className="rounded border px-2 py-1.5 text-sm"
+              value={dia}
+              onChange={(e) => setFiltro({ dia: e.target.value })}
+              aria-label="Día"
+            >
+              <option value={TODOS}>Todo el mes ({turnos.length})</option>
+              {dias.map((d) => (
+                <option key={d.fecha} value={d.fecha}>
+                  {aDiaCorto(d.fecha)} ({d.cantidad})
+                </option>
+              ))}
+            </select>
+            <button
+              onClick={() => irADia(indiceDia + 1)}
+              disabled={dia === TODOS || indiceDia >= dias.length - 1}
+              className="rounded border p-1.5 hover:bg-gray-50 disabled:opacity-40"
+              aria-label="Día siguiente"
+            >
+              <ChevronRight className="h-4 w-4" />
+            </button>
+          </div>
+          {dias.some((d) => d.fecha === hoyStr) && dia !== hoyStr && (
+            <button
+              onClick={() => setFiltro({ dia: hoyStr })}
+              className="rounded border px-3 py-1.5 text-sm hover:bg-gray-50"
+            >
+              Hoy
+            </button>
           )}
+          <label className="relative min-w-[12rem] flex-1">
+            <span className="sr-only">Buscar</span>
+            <Search className="pointer-events-none absolute left-2 top-2 h-4 w-4 text-gray-400" aria-hidden="true" />
+            <input
+              className="w-full rounded border py-1.5 pl-8 pr-2 text-sm"
+              type="search"
+              placeholder="Buscar cliente, DNI, teléfono..."
+              value={q}
+              onChange={(e) => setFiltro({ q: e.target.value })}
+            />
+          </label>
+          <button
+            onClick={exportar}
+            disabled={visibles.length === 0}
+            className="inline-flex items-center gap-2 rounded bg-gray-900 px-3 py-1.5 text-sm text-white hover:bg-gray-800 active:scale-[.98] disabled:opacity-40"
+          >
+            <Download className="h-4 w-4" aria-hidden="true" />
+            CSV
+          </button>
+        </div>
+      )}
 
-          <div className="overflow-auto">
+      {/* Turnos */}
+      {cargando && turnos.length === 0 ? (
+        <div className="py-8 text-center text-gray-500">Cargando turnos...</div>
+      ) : visibles.length === 0 ? (
+        <div className="py-8 text-center text-gray-500">
+          {turnos.length === 0
+            ? `No hay turnos en ${months[mes - 1]} ${anio}.`
+            : "Ningún turno coincide con la búsqueda."}
+        </div>
+      ) : (
+        <>
+          {/* Mobile: tarjetas */}
+          <ul className="space-y-2 md:hidden">
+            {visibles.map((shift) => (
+              <li key={`${shift.DocEntry}`} className="rounded border p-3">
+                <div className="flex items-start justify-between gap-2">
+                  <div className="min-w-0">
+                    <p className="truncate font-medium">{shift.U_custmrName}</p>
+                    <p className="text-sm text-gray-500">
+                      {aDDMMAAAA(shift.U_Fecha)} · {shift.U_StartTime}
+                    </p>
+                  </div>
+                  {selectorEstado(shift)}
+                </div>
+                <p className="mt-2 text-sm text-orange-700">
+                  {getProblemLabel(shift.U_problemTyp, shift.U_ProSubType)}
+                </p>
+                <p className="mt-1 text-sm text-gray-600">
+                  {shift.U_Telephone && <a href={`tel:${shift.U_Telephone}`} className="underline">{shift.U_Telephone}</a>}
+                  {shift.U_dni && <span> · DNI {shift.U_dni}</span>}
+                </p>
+              </li>
+            ))}
+          </ul>
+
+          {/* Desktop: tabla */}
+          <div className="hidden overflow-auto md:block">
             <table className="min-w-full table-auto border-collapse">
               <thead className="text-left text-sm text-gray-600">
                 <tr>
-                  {headers.map((h) => (
-                    <th key={h} className="px-3 py-2 border-b">{h}</th>
+                  {["Nombre", "N° Contacto", "Documento", "Motivo", "Fecha", "H. Inicio", "Estado"].map((h) => (
+                    <th key={h} className="border-b px-3 py-2">{h}</th>
                   ))}
                 </tr>
               </thead>
               <tbody>
-                {currentShifts.map((shift) => (
-                  <tr
-                    className="border-b text-sm"
-                    key={`${shift.DocEntry}-${shift.U_Fecha}-${shift.U_StartTime}`}
-                  >
+                {visibles.map((shift) => (
+                  <tr className="border-b text-sm" key={shift.DocEntry}>
                     <td className="px-3 py-2">{shift.U_custmrName}</td>
                     <td className="px-3 py-2">{shift.U_Telephone}</td>
                     <td className="px-3 py-2">{shift.U_dni}</td>
-                    <td className="px-3 py-2 text-blue-600">{getProblemLabel(shift.U_problemTyp, shift.U_ProSubType)}</td>
-                    
-                    <td className="px-3 py-2">{formatDate(shift.U_Fecha)}</td>
-                    <td className="px-3 py-2">{shift.U_StartTime}</td>
-                    <td className="px-3 py-2">
-                      <select
-                        className={`px-2 py-1 rounded text-white ${
-                          shift.U_State === "Pendiente"
-                            ? "bg-yellow-500"
-                            : shift.U_State === "Atendido"
-                            ? "bg-green-600"
-                            : shift.U_State === "Anulado"
-                            ? "bg-red-600"
-                            : "bg-yellow-500"
-                        }`}
-                        value={shift.U_State || "Pendiente"}
-                        onChange={(e) => handleStatusChange(shift, e.target.value)}
-                      >
-                        <option value="Pendiente" className="bg-yellow-500 text-white">Pendiente</option>
-                        <option value="Atendido" className="bg-green-600 text-white">Atendido</option>
-                        <option value="Anulado" className="bg-red-600 text-white">Anulado</option>
-                      </select>
+                    <td className="px-3 py-2 text-orange-700">
+                      {getProblemLabel(shift.U_problemTyp, shift.U_ProSubType)}
                     </td>
+                    <td className="px-3 py-2 tabular-nums">{aDDMMAAAA(shift.U_Fecha)}</td>
+                    <td className="px-3 py-2 tabular-nums">{shift.U_StartTime}</td>
+                    <td className="px-3 py-2">{selectorEstado(shift)}</td>
                   </tr>
                 ))}
               </tbody>
             </table>
           </div>
-
-        </div>
-      ) : (
-        <div className="text-center py-8 text-gray-500">
-          {Array.isArray(existShifts) && existShifts.length === 0
-            ? "Seleccione un mes y año para ver los turnos"
-            : "No hay turnos disponibles para el período seleccionado"}
-        </div>
+        </>
       )}
     </>
   );
 };
 
 export default Metrics;
-
-const months = [
-  { value: 0, name: "" },
-  { value: 1, name: "Enero" },
-  { value: 2, name: "Febrero" },
-  { value: 3, name: "Marzo" },
-  { value: 4, name: "Abril" },
-  { value: 5, name: "Mayo" },
-  { value: 6, name: "Junio" },
-  { value: 7, name: "Julio" },
-  { value: 8, name: "Agosto" },
-  { value: 9, name: "Septiembre" },
-  { value: 10, name: "Octubre" },
-  { value: 11, name: "Noviembre" },
-  { value: 12, name: "Diciembre" },
-];
-
-const headers = [
-  "Nombre",
-  "N° Contacto",
-  "Documento",
-  "Motivo",
-  
-  "Fecha",
-  "H.Inicio",
-  "Estado",
-];

@@ -28,3 +28,20 @@ export const aDDMMAAAA = (valor) => {
 /** Hoy en "YYYY-MM-DD", en hora local. */
 export const hoyISO = (h = new Date()) =>
   `${h.getFullYear()}-${pad(h.getMonth() + 1)}-${pad(h.getDate())}`;
+
+/** Primer y ultimo dia de un mes, en "YYYY-MM-DD". `mes` es 1-based. */
+export const rangoDelMes = (anio, mes) => {
+  const ultimo = new Date(Number(anio), Number(mes), 0).getDate();
+  return { desde: `${anio}-${pad(mes)}-01`, hasta: `${anio}-${pad(mes)}-${pad(ultimo)}` };
+};
+
+/** -> "Mar 01/09" */
+export const aDiaCorto = (valor) => {
+  const iso = aISO(valor);
+  if (!iso) return "";
+  const [a, m, d] = iso.split("-");
+  const dia = new Intl.DateTimeFormat("es-AR", { weekday: "short" })
+    .format(new Date(Number(a), Number(m) - 1, Number(d)))
+    .replace(".", "");
+  return `${dia.charAt(0).toUpperCase()}${dia.slice(1)} ${d}/${m}`;
+};

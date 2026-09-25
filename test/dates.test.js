@@ -26,3 +26,25 @@ test("getDatesOfMonth cubre el mes entero", () => {
   assert.equal(sep.at(-1).U_Fecha, "2026-09-30");
   assert.equal(getDatesOfMonth(2028, 2, 62).at(-1).U_Fecha, "2028-02-29");
 });
+
+import { rangoDelMes, aDiaCorto } from "../src/utils/dates.js";
+import { aCSV } from "../src/utils/csv.js";
+
+test("rangoDelMes", () => {
+  assert.deepEqual(rangoDelMes(2026, 9), { desde: "2026-09-01", hasta: "2026-09-30" });
+  assert.deepEqual(rangoDelMes("2028", "2"), { desde: "2028-02-01", hasta: "2028-02-29" });
+});
+
+test("aDiaCorto", () => {
+  assert.match(aDiaCorto("2026-09-01T00:00:00Z"), /01\/09$/);
+});
+
+test("aCSV escapa separador, comillas y saltos, con BOM", () => {
+  const csv = aCSV([{ n: 'Pérez; "Juan"', t: "381\nX" }], [
+    { titulo: "Nombre", valor: (f) => f.n },
+    { titulo: "Tel", valor: (f) => f.t },
+  ]);
+  assert.ok(csv.startsWith("﻿Nombre;Tel\r\n"));
+  assert.ok(csv.includes('"Pérez; ""Juan"""'));
+  assert.ok(csv.includes('"381\nX"'));
+});

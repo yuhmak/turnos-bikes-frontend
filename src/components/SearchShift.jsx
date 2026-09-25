@@ -22,8 +22,9 @@ const months = [
 ];
 
 function SearchShift() {
-  const [month, setMonth] = useState(null);
-  const [year, setYear] = useState("");
+  // Arranca en el mes actual: antes el select venia vacio y "Buscar" tiraba "Ingresar el mes".
+  const [month, setMonth] = useState(months[new Date().getMonth() + 1]);
+  const [year, setYear] = useState(String(new Date().getFullYear()));
   const setStoreTurnos = useStore((s) => s.getTurnos);
   const [cookies, setCookie] = useCookies([]);
 
@@ -105,7 +106,7 @@ function SearchShift() {
       <h3 className="pt-3 text-lg font-medium">Ingresar el mes y el año:</h3>
       <div className="flex gap-3 items-center mt-3">
         <div>
-          <select className="border rounded px-2 py-1" onChange={handleMonth} defaultValue={0}>
+          <select className="border rounded px-2 py-1" onChange={handleMonth} defaultValue={month.value}>
             {months.map((opt) => (
               <option value={opt.value} key={opt.value}>
                 {opt.name}
@@ -114,7 +115,7 @@ function SearchShift() {
           </select>
         </div>
         <div>
-          <input className="border rounded px-2 py-1 w-32" type="number" placeholder="Año" onChange={handleYear} />
+          <input className="border rounded px-2 py-1 w-32" type="number" placeholder="Año" defaultValue={year} onChange={handleYear} />
         </div>
         <button className="bg-green-600 text-white px-4 py-2 rounded" onClick={searchShift}>
           Buscar

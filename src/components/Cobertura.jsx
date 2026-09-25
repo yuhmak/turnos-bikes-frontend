@@ -1,14 +1,17 @@
 import { useCallback, useEffect, useState } from "react";
-import { RefreshCw } from "lucide-react";
+import { AlertTriangle, CalendarX, CircleCheck, Ban, RefreshCw } from "lucide-react";
 import { clientAxios } from "../utils/clientAxios";
 import { aDDMMAAAA } from "../utils/dates";
 
 const ESTADOS = {
-  ok: { texto: "Al día", clase: "bg-green-100 text-green-800" },
-  "por-vencer": { texto: "Por vencer", clase: "bg-yellow-100 text-yellow-800" },
-  completa: { texto: "Sin cupo libre", clase: "bg-red-100 text-red-800" },
-  "sin-calendario": { texto: "Sin calendario", clase: "bg-gray-100 text-gray-700" },
+  ok: { texto: "Al día", icono: CircleCheck, clase: "bg-estado-ate/15 text-estado-ate", barra: "bg-estado-ate" },
+  "por-vencer": { texto: "Por vencer", icono: AlertTriangle, clase: "bg-estado-pen/15 text-estado-pen", barra: "bg-estado-pen" },
+  completa: { texto: "Sin cupo libre", icono: Ban, clase: "bg-estado-anu/15 text-estado-anu", barra: "bg-estado-anu" },
+  "sin-calendario": { texto: "Sin calendario", icono: CalendarX, clase: "bg-taller-surface3 text-white", barra: "bg-taller-surface3" },
 };
+
+// La barra se llena respecto de 60 dias, que es hasta donde se abre la agenda en la web.
+const HORIZONTE = 60;
 
 /** Hasta cuándo llega el calendario de cada sucursal y cuál hay que cargar. */
 const Cobertura = () => {
@@ -38,60 +41,59 @@ const Cobertura = () => {
 
   return (
     <>
-      <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
-        <p className="text-sm text-gray-600">
+      <div className="mb-6 flex flex-wrap items-end gap-3">
+        <p className="mr-auto max-w-[60ch] text-sm text-taller-muted">
           Una sucursal aparece en la web si tiene cupos libres a futuro. Avisamos cuando el
           calendario vence en {datos?.diasParaAvisar ?? 30} días o menos.
         </p>
-        <button
-          onClick={() => cargar(true)}
-          disabled={cargando}
-          className="inline-flex items-center gap-2 rounded border px-3 py-1.5 text-sm hover:bg-gray-50 active:scale-[.98] disabled:opacity-50"
-        >
+        <button onClick={() => cargar(true)} disabled={cargando} className="t-btn-ghost">
           <RefreshCw className={`h-4 w-4 ${cargando ? "animate-spin motion-reduce:animate-none" : ""}`} aria-hidden="true" />
           Actualizar
         </button>
       </div>
 
-      {error && <div className="rounded border border-red-200 bg-red-50 p-3 text-sm text-red-700">{error}</div>}
-      {!datos && cargando && <div className="py-8 text-center text-gray-500">Calculando...</div>}
+      {error && <div className="border-l-[3px] border-estado-anu bg-estado-anu/10 p-3 text-sm text-estado-anu">{error}</div>}
+      {!datos && cargando && <p className="py-10 text-center text-taller-muted">Calculando...</p>}
 
       {datos && (
-        <ul className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+        <ul className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
           {datos.sucursales.map((s) => {
-            const estado = ESTADOS[s.estado] ?? ESTADOS["sin-calendario"];
+            const e = ESTADOS[s.estado] ?? ESTADOS["sin-calendario"];
+            const Icono = e.icono;
+            const lleno = s.diasRestantes != null ? Math.min(100, Math.max(0, (s.diasRestantes / HORIZONTE) * 100)) : 0;
             return (
-              <li key={s.BPLId} className="rounded-lg border p-4">
-                <div className="flex items-start justify-between gap-2">
-                  <div className="min-w-0">
-                    <p className="font-medium">{s.BPLName}</p>
-                    <p className="truncate text-sm text-gray-500">{s.Street}</p>
-                  </div>
-                  <span className={`shrink-0 rounded-full px-2 py-0.5 text-xs font-medium ${estado.clase}`}>
-                    {estado.texto}
-                  </span>
+              <li
+                key={s.BPLId}
+                className="grid grid-cols-[1fr_auto] items-start gap-3 bg-taller-surface p-4 [clip-path:polygon(0_0,calc(100%-20px)_0,100%_20px,100%_100%,0_100%)]"
+              >
+                <p className="t-display min-w-0 text-[22px]">
+                  {s.BPLName} · {s.AliasName}
+                  <small className="mt-1 block truncate font-barlow text-[13px] font-medium normal-case not-italic tracking-normal text-taller-muted">
+                    {s.Street}{s.City ? `, ${s.City}` : ""}
+                  </small>
+                </p>
+                <p className="t-display text-right text-[40px] leading-[.9] tabular-nums">
+                  {s.diasRestantes ?? "—"}
+                  <small className="block font-display text-xs font-bold not-italic tracking-[.08em] text-taller-muted">DÍAS</small>
+                </p>
+                <div className="col-span-full h-1 bg-taller-surface3">
+                  <i className={`block h-full ${e.barra}`} style={{ width: `${lleno}%` }} />
                 </div>
-                <dl className="mt-3 grid grid-cols-3 gap-2 text-sm">
-                  <div>
-                    <dt className="text-gray-500">Hasta</dt>
-                    <dd className="tabular-nums">{s.calendarioHasta ? aDDMMAAAA(s.calendarioHasta) : "—"}</dd>
-                  </div>
-                  <div>
-                    <dt className="text-gray-500">Faltan</dt>
-                    <dd className="tabular-nums">{s.diasRestantes != null ? `${s.diasRestantes} días` : "—"}</dd>
-                  </div>
-                  <div>
-                    <dt className="text-gray-500">Libres</dt>
-                    <dd className="tabular-nums">{s.lugaresLibres}</dd>
-                  </div>
-                </dl>
+                <div className="col-span-full flex flex-wrap items-center gap-x-4 gap-y-2 text-sm text-taller-muted">
+                  <span className={`mr-auto inline-flex h-[26px] items-center gap-1.5 px-2.5 font-display text-sm font-extrabold uppercase tracking-wide ${e.clase}`}>
+                    <Icono className="h-3.5 w-3.5" aria-hidden="true" />
+                    {e.texto}
+                  </span>
+                  <span>Hasta <b className="tabular-nums text-white">{s.calendarioHasta ? aDDMMAAAA(s.calendarioHasta) : "—"}</b></span>
+                  <span><b className="tabular-nums text-white">{s.lugaresLibres}</b> libres</span>
+                </div>
               </li>
             );
           })}
         </ul>
       )}
       {datos && datos.sucursales.length === 0 && (
-        <p className="py-8 text-center text-gray-500">No hay sucursales de bicicletas en SAP.</p>
+        <p className="py-10 text-center text-taller-muted">No hay sucursales de bicicletas en SAP.</p>
       )}
     </>
   );

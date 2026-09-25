@@ -102,25 +102,24 @@ function SearchShift() {
   };
 
   return (
-    <div className="mb-6">
-      <h3 className="pt-3 text-lg font-medium">Ingresar el mes y el año:</h3>
-      <div className="flex gap-3 items-center mt-3">
-        <div>
-          <select className="border rounded px-2 py-1" onChange={handleMonth} defaultValue={month.value}>
-            {months.map((opt) => (
-              <option value={opt.value} key={opt.value}>
-                {opt.name}
-              </option>
-            ))}
-          </select>
-        </div>
-        <div>
-          <input className="border rounded px-2 py-1 w-32" type="number" placeholder="Año" defaultValue={year} onChange={handleYear} />
-        </div>
-        <button className="bg-green-600 text-white px-4 py-2 rounded" onClick={searchShift}>
-          Buscar
-        </button>
-      </div>
+    <div className="mb-6 flex flex-wrap items-end gap-2">
+      <label>
+        <span className="t-label mb-1 block">Mes</span>
+        <select className="t-ctl" onChange={handleMonth} defaultValue={month.value}>
+          {months.map((opt) => (
+            <option value={opt.value} key={opt.value}>
+              {opt.name}
+            </option>
+          ))}
+        </select>
+      </label>
+      <label>
+        <span className="t-label mb-1 block">Año</span>
+        <input className="t-ctl w-28" type="number" placeholder="Año" defaultValue={year} onChange={handleYear} />
+      </label>
+      <button className="t-btn-primary" onClick={searchShift}>
+        Buscar
+      </button>
     </div>
   );
 }

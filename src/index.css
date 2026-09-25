@@ -1,8 +1,40 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Barlow:wght@400;500;600;700&family=Barlow+Condensed:ital,wght@0,700;0,800;1,800;1,900&display=swap');
 
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/* Panel "modo taller": primitivas que se repiten en todas las pantallas.
+   CSS plano a proposito (sin @apply de utilidades del theme): no depende de que el
+   dev server haya recargado tailwind.config. Valores = tokens de tailwind.config. */
+@layer components {
+  .t-display { font-family: "Barlow Condensed", Barlow, sans-serif; font-weight: 900; font-style: italic; text-transform: uppercase; line-height: .95; letter-spacing: -.025em; }
+  .t-label { font-family: "Barlow Condensed", Barlow, sans-serif; font-size: 13px; font-weight: 700; text-transform: uppercase; letter-spacing: .08em; color: #adadad; }
+  .t-cut { clip-path: polygon(8px 0, 100% 0, calc(100% - 8px) 100%, 0 100%); }
+  /* Acciones: rectangulos cortados con verbo. Los estados usan pildoras redondeadas: la forma distingue accion de estado. */
+  .t-btn, .t-btn-primary, .t-btn-ghost {
+    clip-path: polygon(8px 0, 100% 0, calc(100% - 8px) 100%, 0 100%);
+    display: inline-flex; align-items: center; justify-content: center; gap: .5rem;
+    height: 2.5rem; padding: 0 1rem; white-space: nowrap;
+    font-family: "Barlow Condensed", Barlow, sans-serif; font-size: 1rem; font-weight: 800; font-style: italic;
+    text-transform: uppercase; letter-spacing: .025em;
+    transition: background-color .15s, transform .15s;
+  }
+  .t-btn:active, .t-btn-primary:active, .t-btn-ghost:active { transform: scale(.97); }
+  .t-btn:disabled, .t-btn-primary:disabled, .t-btn-ghost:disabled { pointer-events: none; opacity: .4; }
+  .t-btn-primary { background: #ff6a00; color: #000; }
+  .t-btn-primary:hover { background: #ff8126; }
+  .t-btn-ghost { background: #282828; color: #fff; }
+  .t-btn-ghost:hover { background: #3f3f40; }
+  .t-ctl { height: 2.5rem; border-radius: .25rem; border: 1px solid #505050; background: #282828; padding: 0 .75rem; font-size: .875rem; color: #fff; }
+  .t-ctl:focus { border-color: #ff6a00; outline: none; }
+  .t-ibtn { display: grid; place-items: center; height: 2.5rem; width: 2.5rem; border-radius: .25rem; border: 1px solid #505050; color: #fff; transition: color .15s, border-color .15s; }
+  .t-ibtn:hover { border-color: #ff6a00; color: #ff6a00; }
+  .t-ibtn:disabled { pointer-events: none; opacity: .4; }
+  @media (prefers-reduced-motion: reduce) {
+    .t-btn, .t-btn-primary, .t-btn-ghost, .t-ibtn { transition: none; }
+  }
+}
 
 
 .container { max-width: 1200px; margin-left: auto; margin-right: auto }

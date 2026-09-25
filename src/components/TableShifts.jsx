@@ -2,6 +2,7 @@ import { clientAxios } from "../utils/clientAxios";
 import toast from "react-hot-toast";
 import { useStore } from "../store/useStore";
 import { useCookies } from "react-cookie";
+import { aDDMMAAAA, aDiaCorto } from "../utils/dates";
 
 function TableShifts() {
   const shifts = useStore((s) => s.shifts);
@@ -59,77 +60,98 @@ function TableShifts() {
       { duration: 0 }
     );
 
-    if (bodyStringified[0].DocEntry) {
-      await clientAxios.patch("/patchShiftList", bodyStringified);
-    } else {
-      const { data } = await clientAxios.post("/createShiftList", bodyStringified);
-      manageShiftBody(data);
+    const editando = Boolean(bodyStringified[0].DocEntry);
+    try {
+      if (editando) {
+        await clientAxios.patch("/patchShiftList", bodyStringified);
+      } else {
+        const { data } = await clientAxios.post("/createShiftList", bodyStringified);
+        manageShiftBody(data);
+      }
+      toast.success(editando ? "Calendario editado." : "Calendario generado.", { id: toastId, duration: 3000 });
+    } catch (error) {
+      console.error(error);
+      toast.error("No se pudo guardar el calendario. Intentá de nuevo.", { id: toastId, duration: 3000 });
+    } finally {
+      setCookie("loading", false);
     }
-
-    setCookie("loading", false);
-    toast.dismiss(toastId);
-    toast.success(bodyStringified[0].DocEntry ? "Calendario editado exitosamente." : "Calendario generado exitosamente.");
   };
 
-function formatDate(dateString) {
-  // Asegurar compatibilidad con ISO evitando la parte hora
-  const cleanDate = dateString.split("T")[0];
-
-  const [year, month, day] = cleanDate.split("-");
-  const date = new Date(year, month - 1, day);
-
-  if (isNaN(date)) {
-    console.error("Fecha inválida:", dateString);
+  const celda = (hour) => {
+    if (!hour.cantrecep) return "off";
+    if (hour.ocupado >= hour.cantrecep) return "full";
+    if (hour.ocupado > 0) return "part";
     return "";
+  };
+  const fondos = {
+    off: "bg-[repeating-linear-gradient(-45deg,#000_0_4px,#282828_4px_8px)]",
+    full: "bg-estado-anu/15",
+    part: "bg-estado-pen/15",
+    "": "bg-taller-surface2",
+  };
+  const horarios = shifts[0]?.U_HorarioRecep?.map((h) => h.hs) ?? [];
+
+  if (!Array.isArray(shifts) || shifts.length === 0) {
+    return <p className="py-10 text-center text-taller-muted">Elegí un mes y año para ver el calendario de cupos.</p>;
   }
-
-  const dayName = new Intl.DateTimeFormat("es-ES", {
-    weekday: "long",
-  }).format(date);
-
-  return `${dayName.charAt(0).toUpperCase() + dayName.slice(1)} ${day}/${month}/${year}`;
-}
-
 
   return (
     <>
-      {!Array.isArray(shifts) || shifts.length === 0 ? (
-        <div className="text-center py-8 text-gray-500">
-          {!Array.isArray(!shifts) ? "Seleccione un mes y año para ver los turnos" : "No hay turnos disponibles para el período seleccionado"}
+      <div className="mb-3 flex flex-wrap items-center gap-3">
+        <div className="mr-auto flex flex-wrap gap-4 text-[13px] text-taller-muted">
+          <span className="inline-flex items-center gap-1.5"><i className="h-3.5 w-3.5 bg-taller-surface2" />Libre</span>
+          <span className="inline-flex items-center gap-1.5"><i className="h-3.5 w-3.5 bg-estado-pen/40" />Con reservas</span>
+          <span className="inline-flex items-center gap-1.5"><i className="h-3.5 w-3.5 bg-estado-anu/40" />Completo</span>
+          <span className="inline-flex items-center gap-1.5"><i className={`h-3.5 w-3.5 ${fondos.off}`} />Cerrado (0)</span>
         </div>
-      ) : (
-        <div className="bg-white shadow rounded p-4">
-          <div className="mb-4">
-            <button className="w-full bg-blue-600 text-white px-4 py-2 rounded cursor-pointer hover:bg-blue-700" onClick={generateCalendar}>
-              {shifts[0].DocEntry ? "Editar Calendario" : "Cargar Calendario"}
-            </button>
-          </div>
+        <button className="t-btn-primary" onClick={generateCalendar}>
+          {shifts[0].DocEntry ? "Guardar cambios" : "Cargar calendario"}
+        </button>
+      </div>
 
-          <div className="overflow-auto">
-            <table className="min-w-full table-auto border-collapse">
-              <tbody>
-                {shifts.map((head, rowIndex) => (
-                  <tr key={rowIndex} className="align-top border-b">
-                    <td className="p-4 bg-blue-600 text-white rounded-l w-60">{formatDate(head.U_Fecha)}</td>
-                    {head.U_HorarioRecep.map((hour, index) => (
-                      <td key={`${rowIndex}-${index}`} className={`p-3 border-l ${hour.ocupado > 0 ? 'bg-red-600 text-gray-100' : ''}`}>
-                        <div className="bg-blue-600 text-white px-2 py-1 rounded inline-block mb-2">{hour.hs}</div>
-                        <div className="text-sm mb-2">{hour.ocupado} de</div>
+      <div className="overflow-x-auto border border-taller-border bg-taller-surface">
+        <table className="w-full min-w-[880px] table-fixed border-separate border-spacing-0.5 p-1">
+          <thead>
+            <tr>
+              <th className="sticky left-0 z-10 w-[112px] bg-taller-surface px-2 text-left font-display text-sm font-bold text-taller-muted">Día</th>
+              {horarios.map((hs) => (
+                <th key={hs} className="px-0.5 py-1 font-display text-sm font-bold text-taller-muted tabular-nums">{hs}</th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {shifts.map((head) => (
+              <tr key={head.U_Fecha}>
+                <td className="sticky left-0 z-10 bg-taller-surface py-1 pl-2 pr-3 font-display text-lg font-extrabold uppercase italic leading-none">
+                  {aDiaCorto(head.U_Fecha)}
+                </td>
+                {head.U_HorarioRecep.map((hour) => {
+                  const tipo = celda(hour);
+                  return (
+                    <td key={hour.hs} className="p-0">
+                      <label className={`relative flex h-[52px] w-full flex-col items-center justify-center ${fondos[tipo]}`} title={`${aDDMMAAAA(head.U_Fecha)} ${hour.hs}`}>
+                        <span className="sr-only">{`Recepciones ${aDDMMAAAA(head.U_Fecha)} ${hour.hs}`}</span>
                         <input
                           type="number"
+                          min="0"
                           value={hour.cantrecep}
                           onChange={(event) => handleChange(event, head, hour)}
-                          className="w-20 border rounded px-2 py-1 text-black"
+                          className={`w-10 border-0 border-b bg-transparent text-center font-display text-xl font-extrabold leading-tight tabular-nums focus:border-accent focus:outline-none ${
+                            tipo === "off" ? "border-transparent text-taller-faint" : "border-taller-strong text-white"
+                          }`}
                         />
-                      </td>
-                    ))}
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </div>
-      )}
+                        <small className={`text-[11px] leading-tight ${tipo === "full" ? "font-bold text-estado-anu" : tipo === "part" ? "text-estado-pen" : "text-taller-muted"}`}>
+                          {hour.ocupado} ocup.
+                        </small>
+                      </label>
+                    </td>
+                  );
+                })}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
     </>
   );
 }

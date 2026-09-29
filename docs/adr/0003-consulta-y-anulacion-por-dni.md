@@ -1,7 +1,7 @@
 # ADR-0003: El cliente consulta y anula sus turnos con el DNI
 
 - **Fecha:** 25/09/2026
-- **Estado:** Aceptada · **pendiente de revisión del área de seguridad**
+- **Estado:** Aceptada · aprobada por el área de seguridad (29/09/2026)
 - **Commits:** `c89e8d7` (backend), `2298ae6` (frontend)
 
 ## Contexto
@@ -30,6 +30,6 @@ Se agrega la sección "¿Ya tenés turno?" en la landing, con dos endpoints púb
 
 ## Consecuencias
 
-- **Riesgo aceptado hasta la revisión:** quien conozca un DNI puede ver cuándo tiene turno esa persona y anulárselo. **No se mergea a `main` sin el OK del área de seguridad.**
+- **Riesgo aceptado por el área de seguridad** (29/09/2026): quien conozca un DNI puede ver cuándo tiene turno esa persona y anulárselo.
 - **Falta rate limiting** en las rutas públicas. Es lo primero a sumar si seguridad lo pide.
 - **Tests:** `test/anular-turno.test.mjs` cubre las reglas de `puedeAnularse` y la validación de entrada.

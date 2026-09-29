@@ -6,7 +6,7 @@ Un archivo por decisión, numerado. Cada ADR está escrito para quien en seis me
 |---|---|---|---|
 | [0001](./0001-rango-de-fechas-con-formatos-mezclados.md) | Los filtros sobre `TURNOS.U_Fecha` son rangos con borde superior exclusivo | 25/09/2026 | Aceptada |
 | [0002](./0002-sucursales-derivadas-de-sap.md) | Las sucursales de la web se derivan de SAP, sin lista fija | 25/09/2026 | Aceptada |
-| [0003](./0003-consulta-y-anulacion-por-dni.md) | El cliente consulta y anula sus turnos con el DNI | 25/09/2026 | Aceptada · pendiente de revisión de seguridad |
+| [0003](./0003-consulta-y-anulacion-por-dni.md) | El cliente consulta y anula sus turnos con el DNI | 25/09/2026 | Aceptada · aprobada por seguridad (29/09/2026) |
 | [0004](./0004-anulados-ocultos-y-sin-deshacer.md) | Los anulados se ocultan en el panel y no se deshacen | 25/09/2026 | Aceptada |
 | [0005](./0005-tokens-y-primitivas-en-css-plano.md) | Tokens en Tailwind y primitivas de componentes en CSS plano | 25/09/2026 | Aceptada |
 

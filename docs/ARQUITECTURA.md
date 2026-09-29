@@ -122,7 +122,7 @@ El pre-chequeo y la validación del backend usan el **mismo** filtro: `buildTurn
 |---|---|
 | Rutas 🔓 que interpolan datos en OData | DNI, fecha y BPLId se validan antes (`esDniValido`, `esFechaValida`, `/^\d+$/`) |
 | `/getShiftExist` | Antes devolvía los registros completos de TURNOS. Ahora solo devuelve `{exists}` |
-| `/misTurnos` y `/misTurnos/anular` | **Pendiente de revisión del área de seguridad.** Solo con el DNI se ven y se anulan turnos. Ver [ADR-0003](./adr/0003-consulta-y-anulacion-por-dni.md) |
+| `/misTurnos` y `/misTurnos/anular` | Aprobado por el área de seguridad (29/09/2026). Solo con el DNI se ven y se anulan turnos. Ver [ADR-0003](./adr/0003-consulta-y-anulacion-por-dni.md) |
 | `/searchCustomerMotorbike` | **Pendiente de revisión.** Devuelve datos completos del cliente sin sesión. Viene de antes y no se tocó |
 | Rate limiting en rutas 🔓 | No hay |
 | Logs | Los errores de axios se loguean con `error.message`, porque el dump completo incluye el body del Login con las credenciales maestras. Queda algún `console.log(error)` viejo por revisar |
